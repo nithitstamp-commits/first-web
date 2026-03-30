@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบออมเงินอัจฉริยะ | Smart Savings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* CSS พื้นฐานเพื่อให้ระบบแสดงผลได้ */
+        :root {
+            --primary: #3B82F6;
+            --secondary: #6EE7B7;
+            --bg: #f8fafc;
+            --text: #1e293b;
+        }
+        body {
+            font-family: 'Noto Sans Thai', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding-bottom: 80px;
+        }
+        .app-header {
+            background: linear-gradient(135deg, #3B82F6, #6EE7B7);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        .tab-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .tab-btn {
+            border: none;
+            background: none;
+            font-size: 0.8rem;
+            color: #64748b;
+            cursor: pointer;
+        }
+        .tab-btn.active { color: var(--primary); font-weight: bold; }
+        .tab-panel { display: none; padding: 20px; max-width: 600px; margin: auto; }
+        .tab-panel.active { display: block; }
+        
+        .add-savings-card, .planner-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .hidden { display: none; }
+        .result-card { background: #e0f2fe; padding: 15px; border-radius: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <h1>ออมเงินอัจฉริยะ</h1>
+        <p id="totalSavedDisplay">ยอดออมสะสม: ฿0</p>
+    </header>
+
+    <nav class="tab-nav">
+        <button class="tab-btn active" onclick="showTab('add')">เพิ่มเงินออม</button>
+        <button class="tab-btn" onclick="showTab('planner')">วางแผน</button>
+    </nav>
+
+    <main class="main-content">
+        <!-- Tab: Add Savings -->
+        <section class="tab-panel active" id="panelAdd">
+            <div class="add-savings-card">
+                <h2>บันทึกเงินออม</h2>
+                <label>จำนวนเงิน (บาท)</label>
+                <input type="number" id="savingsAmount" placeholder="0.00">
+                <button class="btn-primary" onclick="addSavings()">บันทึก</button>
+            </div>
+            <div id="recentEntries"></div>
+        </section>
+
+        <!-- Tab: Planner -->
+        <section class="tab-panel" id="panelPlanner">
+            <div class="planner-card">
+                <h2>คำนวณแผนการออม</h2>
+                <input type="number" id="planTarget" placeholder="เป้าหมายเงินออม (บาท)">
+                <input type="number" id="planMonths" placeholder="จำนวนเดือน">
+                <button class="btn-primary" onclick="calculatePlan()">คำนวณ</button>
+                
+                <div id="planResult" class="hidden">
+                    <div class="result-card">
+                        <span>ต้องออมวันละ: </span>
+                        <strong id="dailySavingsResult">฿0</strong>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let totalSaved = 0;
+
+        // ฟังก์ชันสลับหน้าจอ (Tab)
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById('panel' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // ฟังก์ชันเพิ่มเงินออม
+        function addSavings() {
+            const amount = parseFloat(document.getElementById('savingsAmount').value);
+            if (isNaN(amount) || amount <= 0) {
+                alert('กรุณากรอกจำนวนเงินที่ถูกต้อง');
+                return;
+            }
+
+            totalSaved += amount;
+            document.getElementById('totalSavedDisplay').innerText = `ยอดออมสะสม: ฿${totalSaved.toLocaleString()}`;
+            
+            const entry = document.createElement('p');
+            entry.innerText = `✅ บันทึกแล้ว: ฿${amount} เมื่อ ${new Date().toLocaleTimeString()}`;
+            document.getElementById('recentEntries').prepend(entry);
+            
+            document.getElementById('savingsAmount').value = '';
+            alert('บันทึกสำเร็จ!');
+        }
+
+        // ฟังก์ชันวางแผนการออม
+        function calculatePlan() {
+            const target = parseFloat(document.getElementById('planTarget').value);
+            const months = parseInt(document.getElementById('planMonths').value);
+
+            if (target > 0 && months > 0) {
+                const daily = target / (months * 30);
+                document.getElementById('dailySavingsResult').innerText = `฿${daily.toFixed(2)}`;
+                document.getElementById('planResult').classList.remove('hidden');
+            } else {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+            }
+        }
+    </script>
+</body>
+</html>
