@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบออมเงินอัจฉริยะ | Smart Savings</title>
+    <meta name="description" content="ระบบออมเงินอัจฉริยะ ช่วยวางแผนการออม ติดตามเป้าหมาย และวิเคราะห์แนวโน้มการออมเงินของคุณ">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Ambient background blobs -->
+    <div class="ambient-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <circle cx="16" cy="16" r="14" stroke="url(#grad1)" stroke-width="2.5"/>
+                        <path d="M16 8v16M10 14h12M10 18h12" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round"/>
+                        <defs>
+                            <linearGradient id="grad1" x1="0" y1="0" x2="32" y2="32">
+                                <stop stop-color="#6EE7B7"/>
+                                <stop offset="1" stop-color="#3B82F6"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div>
+                    <h1>ออมเงินอัจฉริยะ</h1>
+                    <p class="logo-subtitle">Smart Savings Tracker</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="header-stat" id="headerTotalSaved">
+                    <span class="stat-label">ออมแล้วทั้งหมด</span>
+                    <span class="stat-value" id="totalSavedDisplay">฿0</span>
+                </div>
+                <div class="header-stat" id="headerStreak">
+                    <span class="stat-label">ออมต่อเนื่อง</span>
+                    <span class="stat-value" id="streakDisplay">0 วัน</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="add" id="tabAdd">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span>เพิ่มเงินออม</span>
+        </button>
+        <button class="tab-btn" data-tab="summary" id="tabSummary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            <span>สรุป</span>
+        </button>
+        <button class="tab-btn" data-tab="chart" id="tabChart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+            <span>กราฟ</span>
+        </button>
+        <button class="tab-btn" data-tab="goals" id="tabGoals">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            <span>เป้าหมาย</span>
+        </button>
+        <button class="tab-btn" data-tab="planner" id="tabPlanner">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+            <span>วางแผน</span>
+        </button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Tab: Add Savings -->
+        <section class="tab-panel active" id="panelAdd">
+            <div class="panel-header">
+                <h2>เพิ่มเงินออมวันนี้</h2>
+                <p>บันทึกการออมเงินประจำวัน เริ่มต้นวันนี้!</p>
+            </div>
+
+            <div class="add-savings-card">
+                <div class="savings-date">
+                    <label for="savingsDate">วันที่</label>
+                    <input type="date" id="savingsDate">
+                </div>
+
+                <div class="savings-amount-section">
+                    <label>จำนวนเงิน (บาท)</label>
+                    <div class="amount-input-wrapper">
+                        <span class="currency-symbol">฿</span>
+                        <input type="number" id="savingsAmount" placeholder="0.00" min="0" step="0.01">
+                    </div>
+                </div>
+
+                <div class="quick-amounts">
+                    <button class="quick-btn" data-amount="10">฿10</button>
+                    <button class="quick-btn" data-amount="20">฿20</button>
+                    <button class="quick-btn" data-amount="50">฿50</button>
+                    <button class="quick-btn" data-amount="100">฿100</button>
+                    <button class="quick-btn" data-amount="200">฿200</button>
+                    <button class="quick-btn" data-amount="500">฿500</button>
+                </div>
+
+                <div class="savings-note">
+                    <label for="savingsNote">บันทึกช่วยจำ (ไม่บังคับ)</label>
+                    <input type="text" id="savingsNote" placeholder="เช่น ไม่ซื้อกาแฟวันนี้ ☕">
+                </div>
+
+                <button class="btn-primary" id="btnSave" onclick="addSavings()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v20M2 12h20"/></svg>
+                    บันทึกการออม
+                </button>
+            </div>
+
+            <!-- Today's entries -->
+            <div class="today-entries">
+                <h3>บันทึกล่าสุด</h3>
+                <div id="recentEntries" class="entries-list">
+                    <div class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                        <p>ยังไม่มีรายการ เริ่มออมเงินกันเลย!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Summary -->
+        <section class="tab-panel" id="panelSummary">
+            <div class="panel-header">
+                <h2>สรุปการออม</h2>
+                <p>ดูภาพรวมการออมเงินของคุณ</p>
+            </div>
+
+            <div class="summary-period-tabs">
+                <button class="period-btn active" data-period="day" id="periodDay">รายวัน</button>
+                <button class="period-btn" data-period="week" id="periodWeek">สัปดาห์</button>
+                <button class="period-btn" data-period="month" id="periodMonth">เดือน</button>
+                <button class="period-btn" data-period="year" id="periodYear">ปี</button>
+            </div>
+
+            <div class="summary-cards" id="summaryCards">
+                <div class="summary-card highlight">
+                    <div class="summary-icon">💰</div>
+                    <div class="summary-info">
+                        <span class="summary-label">ยอดรวม</span>
+                        <span class="summary-value" id="summaryTotal">฿0</span>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">📊</div>
+                    <div class="summary-info">
+                        <span class="summary-label">ค่าเฉลี่ย/วัน</span>
+                        <span class="summary-value" id="summaryAvg">฿0</span>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">🔥</div>
+                    <div class="summary-info">
+                        <span class="summary-label">วันที่ออมมากสุด</span>
+                        <span class="summary-value" id="summaryMax">฿0</span>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">📅</div>
+                    <div class="summary-info">
+                        <span class="summary-label">จำนวนวันที่ออม</span>
+                        <span class="summary-value" id="summaryDays">0 วัน</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary detail table -->
+            <div class="summary-table-section">
+                <h3>รายละเอียด</h3>
+                <div class="table-wrapper">
+                    <table class="summary-table" id="summaryTable">
+                        <thead>
+                            <tr>
+                                <th>วันที่</th>
+                                <th>จำนวนเงิน</th>
+                                <th>บันทึก</th>
+                                <th>จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Chart -->
+        <section class="tab-panel" id="panelChart">
+            <div class="panel-header">
+                <h2>กราฟแนวโน้ม</h2>
+                <p>วิเคราะห์แนวโน้มการออมเงินของคุณ</p>
+            </div>
+
+            <div class="chart-controls">
+                <button class="chart-type-btn active" data-chart="line" id="chartLine">เส้น</button>
+                <button class="chart-type-btn" data-chart="bar" id="chartBar">แท่ง</button>
+                <button class="chart-type-btn" data-chart="cumulative" id="chartCumulative">สะสม</button>
+            </div>
+
+            <div class="chart-period-controls">
+                <button class="chart-period-btn active" data-range="7" id="chartRange7">7 วัน</button>
+                <button class="chart-period-btn" data-range="30" id="chartRange30">30 วัน</button>
+                <button class="chart-period-btn" data-range="90" id="chartRange90">3 เดือน</button>
+                <button class="chart-period-btn" data-range="365" id="chartRange365">1 ปี</button>
+                <button class="chart-period-btn" data-range="0" id="chartRangeAll">ทั้งหมด</button>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="savingsChart"></canvas>
+            </div>
+
+            <div class="chart-insights" id="chartInsights">
+                <!-- Dynamic insights -->
+            </div>
+        </section>
+
+        <!-- Tab: Goals -->
+        <section class="tab-panel" id="panelGoals">
+            <div class="panel-header">
+                <h2>เป้าหมายการออม</h2>
+                <p>ตั้งเป้าหมายและติดตามความคืบหน้า</p>
+            </div>
+
+            <div class="add-goal-card">
+                <h3>ตั้งเป้าหมายใหม่</h3>
+                <div class="goal-form">
+                    <div class="goal-field">
+                        <label for="goalName">ชื่อเป้าหมาย</label>
+                        <input type="text" id="goalName" placeholder="เช่น ท่องเที่ยวญี่ปุ่น 🗾">
+                    </div>
+                    <div class="goal-field">
+                        <label for="goalAmount">จำนวนเงินเป้าหมาย (บาท)</label>
+                        <div class="amount-input-wrapper">
+                            <span class="currency-symbol">฿</span>
+                            <input type="number" id="goalAmount" placeholder="0" min="0">
+                        </div>
+                    </div>
+                    <div class="goal-field">
+                        <label for="goalDeadline">วันกำหนด</label>
+                        <input type="date" id="goalDeadline">
+                    </div>
+                    <div class="goal-field">
+                        <label for="goalEmoji">ไอคอน</label>
+                        <div class="emoji-picker">
+                            <button class="emoji-btn active" data-emoji="🎯">🎯</button>
+                            <button class="emoji-btn" data-emoji="✈️">✈️</button>
+                            <button class="emoji-btn" data-emoji="🏠">🏠</button>
+                            <button class="emoji-btn" data-emoji="🚗">🚗</button>
+                            <button class="emoji-btn" data-emoji="📱">📱</button>
+                            <button class="emoji-btn" data-emoji="💎">💎</button>
+                            <button class="emoji-btn" data-emoji="🎓">🎓</button>
+                            <button class="emoji-btn" data-emoji="💊">💊</button>
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="btnAddGoal" onclick="addGoal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                        เพิ่มเป้าหมาย
+                    </button>
+                </div>
+            </div>
+
+            <div class="goals-list" id="goalsList">
+                <!-- Dynamic goals -->
+            </div>
+        </section>
+
+        <!-- Tab: Planner -->
+        <section class="tab-panel" id="panelPlanner">
+            <div class="panel-header">
+                <h2>วางแผนการออม</h2>
+                <p>คำนวณว่าต้องออมวันละเท่าไหร่เพื่อบรรลุเป้าหมาย</p>
+            </div>
+
+            <div class="planner-card">
+                <div class="planner-form">
+                    <div class="planner-field">
+                        <label for="planTarget">จำนวนเงินที่ต้องการ (บาท)</label>
+                        <div class="amount-input-wrapper">
+                            <span class="currency-symbol">฿</span>
+                            <input type="number" id="planTarget" placeholder="10000" min="0">
+                        </div>
+                    </div>
+                    <div class="planner-field">
+                        <label for="planDuration">ระยะเวลา</label>
+                        <div class="duration-inputs">
+                            <div class="duration-input">
+                                <input type="number" id="planMonths" placeholder="3" min="0" max="120">
+                                <span>เดือน</span>
+                            </div>
+                            <div class="duration-input">
+                                <input type="number" id="planDays" placeholder="0" min="0" max="31">
+                                <span>วัน</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="planner-field">
+                        <label for="planCurrentSavings">เงินออมปัจจุบัน (บาท)</label>
+                        <div class="amount-input-wrapper">
+                            <span class="currency-symbol">฿</span>
+                            <input type="number" id="planCurrentSavings" placeholder="0" min="0">
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="btnCalculate" onclick="calculatePlan()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
+                        คำนวณ
+                    </button>
+                </div>
+            </div>
+
+            <div class="plan-result hidden" id="planResult">
+                <div class="result-card main-result">
+                    <div class="result-icon">💡</div>
+                    <div class="result-info">
+                        <span class="result-label">ต้องออมวันละ</span>
+                        <span class="result-value" id="dailySavingsResult">฿0</span>
+                    </div>
+                </div>
+
+                <div class="result-cards-grid">
+                    <div class="result-card">
+                        <div class="result-icon">📅</div>
+                        <div class="result-info">
+                            <span class="result-label">ต่อสัปดาห์</span>
+                            <span class="result-value" id="weeklySavingsResult">฿0</span>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-icon">📆</div>
+                        <div class="result-info">
+                            <span class="result-label">ต่อเดือน</span>
+                            <span class="result-value" id="monthlySavingsResult">฿0</span>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-icon">⏰</div>
+                        <div class="result-info">
+                            <span class="result-label">จำนวนวันทั้งหมด</span>
+                            <span class="result-value" id="totalDaysResult">0 วัน</span>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-icon">🎯</div>
+                        <div class="result-info">
+                            <span class="result-label">วันที่ถึงเป้า</span>
+                            <span class="result-value" id="targetDateResult">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="plan-timeline" id="planTimeline">
+                    <!-- Dynamic timeline milestones -->
+                </div>
+
+                <div class="plan-tips">
+                    <h3>💡 เคล็ดลับการออม</h3>
+                    <div class="tips-grid" id="tipsGrid">
+                        <!-- Dynamic tips -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast notification -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Confetti canvas -->
+    <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+
+    <script src="app.js"></script>
+</body>
+</html>
